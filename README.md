@@ -25,7 +25,8 @@ Note: the skill behavior is best on the Amazon echo device. It changes a bit in 
 As of April 3, 2023: if OpenAI API takes longer than 8 secs to respond the Alexa skill times out and you get a response " There was a problem with the requested skill's response". Working on it to fix it. 
 
 ## Creating Routine on Amazon Echo 
-to invoke chatGPT more naturally
+to invoke chatGPT more naturally...
+
 Due to limitations of invocation naming conventions, I use Alexa routine to invoke/open the chatGPT skill more naturally:
 On your Alexa app on the phone, create a routine: More -> Routines -> + .. 
 1. Set routine name chatGPT. 
