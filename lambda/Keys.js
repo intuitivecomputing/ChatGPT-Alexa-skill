@@ -1,0 +1,3 @@
+// you'll need to get your own OPEN AI API key...
+// see https://beta.openai.com/docs/api-reference/authentication
+module.exports.OPEN_AI_KEY = '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';
