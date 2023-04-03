@@ -88,7 +88,7 @@ const AskChatGPTIntentHandler = {
    
    // make a POST API call to the OpenAI GPT-3.5 turbo endpoint
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
-    const authToken = 'Bearer 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';
+    const authToken = 'Bearer <YOUR_OPEN_AI_KEY>';
     const requestData = {
         model : 'gpt-3.5-turbo',
         messages: gptTurboMessage
