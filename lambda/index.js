@@ -13,7 +13,7 @@ const axios = require('axios');
     apiKey: keys.OPEN_AI_KEY
 });*/
 
-const openai = new OpenAIApi(config);
+//const openai = new OpenAIApi(config);
 const intro_hi = ["Hello! ", "Hi! ", "Hey! ", "Welcome! "]
 const intro_agent =["I am an AI language model designed to present requested information. ", 
 "I am an intelligent virtual agent programmed to provide you with the requested information to the best of my ability. ",
