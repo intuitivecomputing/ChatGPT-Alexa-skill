@@ -85,6 +85,28 @@ const AskChatGPTIntentHandler = {
     gptTurboMessage.push({role:"user", content:  question});
     
   
+   // Set a timeout of 8 seconds for the API call
+  
+  const timeoutId = setTimeout(() => {
+  //console.log('API call not completed within 3 seconds');
+  // Reject the API response promise to handle the timeout scenario
+  //apiResponseReject(new Error('API call timed out'));
+  // Make the API call to mark the directive as complete
+    axios.post('https://api.amazonalexa.com/v1/directives', request, {
+      headers: {
+        Authorization: `Bearer ${apiAccessToken}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('Directive sent successfully!');
+    })
+    .catch(error => {
+      console.error('Error sending directive:', error);
+    });
+   
+}, 4000);
+  
    
    // make a POST API call to the OpenAI GPT-3.5 turbo endpoint
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
@@ -134,8 +156,10 @@ const AskChatGPTIntentHandler = {
       directive: directive
     };
 
+   
+
   
-   // Make the API call to mark the directive as complete
+ /*  // Make the API call to mark the directive as complete
     axios.post('https://api.amazonalexa.com/v1/directives', request, {
       headers: {
         Authorization: `Bearer ${apiAccessToken}`,
@@ -148,11 +172,12 @@ const AskChatGPTIntentHandler = {
     .catch(error => {
       console.error('Error sending directive:', error);
     });
-   
+   */
    
    // wait for the API response
    try{
     const apiResponse = await apiResponsePromise;
+    clearTimeout(timeoutId);
     const finalSpeech = ` ${apiResponse.data.choices[0].message.content}.`;
     const index2 = Math.floor(Math.random() * 3);
     gptTurboMessage.push({role:apiResponse.data.choices[0].message.role, content: apiResponse.data.choices[0].message.content});
