@@ -8,6 +8,7 @@ const {Configuration, OpenAIApi} = require('openai');
 //const keys = require('./Keys');
 var gptTurboMessage =  [{role:"system", content: "You are an AI assistant. "}]; //Try to be brief when possible.
 const axios = require('axios');
+const fs = require("fs");
 
 /*const config = new Configuration({
     apiKey: keys.OPEN_AI_KEY
@@ -24,7 +25,7 @@ const intro_agent =["I am an AI language model designed to present requested inf
 const intro_error = [" However, I am not perfect so take caution in using the information I provide... ",
 "However, as with any technology, errors or inaccuracies may occur, so please use the provided information with caution and verify if necessary... ",
 "Please bear in mind that errors or inaccuracies may happen so use the information provided with caution and verify if necessary... ",
-"However, errors and inaccuracies may sometimes occur, so please exercise cause when utilizing the information I present and verify it if needed... ",
+"However, errors and inaccuracies may sometimes occur, so please exercise caution when utilizing the information I present and verify it if needed... ",
 "But mistakes can happen. Please double check the information I give you before relying on it... ", 
 "But errors are possible. Always verify the information I provide before using it... "];
 
@@ -34,21 +35,57 @@ const other = ['Any other questions for me?', 'What else can I help you with?', 
 
 const bye = ["Goodbye!", "Untill next time!", "Take care!", "Stay safe!", "Bye!", "Have a good one!"];
 
-const fillers = ["Let me check that for you!", "checking", "looking up"];
+const fillers = ["checking that for you!", "searching!", "looking up!", "still fetching!", "Almost there!", "let me check!", "I'm on it!", "Hold on!", "still looking!"];
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
     handle(handlerInput) {
+        const fs = require("fs");
+
+/*// reading a JSON file asynchronously
+        fs.readFileSync("./previousConversation.json", (error, data) => {
+          // if the reading process failed,
+          // throwing the error
+          if (error) {
+            // logging the error
+            console.error(error);
+        
+           // throw err;
+          }
+        
+          // parsing the JSON object
+          // to convert it to a JavaScript object
+           gptTurboMessage = data;
+         
+          // printing the JavaScript object
+          // retrieved from the JSON file
+          //console.log(gptTurboMessage);
+        });*/
+       /* // writing the JSON string content to a file
+     const   data = JSON.stringify([{role:"system", content: "You are an AI assistant. Try to be brief! "}]); //Try to be brief when possible.
+    fs.writeFileSync("./previousConversation.json", data, (error) => {
+      // throwing the error
+      // in case of a writing problem
+      if (error) {
+        // logging the error
+        console.error(error);
+    
+        throw error;
+      }
+    
+      console.log("previousConversation.json written correctly");
+    });*/
         const index = Math.floor(Math.random() * 3);
         const index_hi = Math.floor(Math.random() * 3);
         const index_agent = Math.floor(Math.random() * 4); 
         const index_error = Math.floor(Math.random() * 5);
+        const index2 = Math.floor(Math.random() * 3);
         const speakOutput =  intro_hi[index_hi] + intro_agent[index_agent] + intro_error[index_error] + intro[index];
-
+        const reprompting = intro[index2];
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            .reprompt(speakOutput)
+            .reprompt(reprompting)
             .getResponse();
     }
 };
@@ -84,14 +121,153 @@ const AskChatGPTIntentHandler = {
             Alexa.getSlotValue(handlerInput.requestEnvelope, 'question');
     gptTurboMessage.push({role:"user", content:  question});
     
-  
-   // Set a timeout of 8 seconds for the API call
+  //let flagProgressiveAPI = false;
+   // Set a timeout of 4 seconds for the progressive API call
   
   const timeoutId = setTimeout(() => {
-  //console.log('API call not completed within 3 seconds');
+  console.log('API call not completed within 4 seconds. so sending a progressive call ');
   // Reject the API response promise to handle the timeout scenario
   //apiResponseReject(new Error('API call timed out'));
   // Make the API call to mark the directive as complete
+     //working
+    let progressiveApiResponsePromise = axios.post('https://api.amazonalexa.com/v1/directives', request, {
+      headers: {
+        Authorization: `Bearer ${apiAccessToken}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('Directive sent successfully!');
+    })
+    .catch(error => {
+      console.error('Error sending directive:', error);
+    });
+    
+   //flagProgressiveAPI = true;
+    
+   
+},4000);
+
+
+
+
+
+    /* trying Something
+    const apiUrl = 'https://api.openai.com/v1/chat/completions';
+    const authToken = 'Bearer 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';
+    const requestData = {
+        model : 'gpt-3.5-turbo',
+        messages: gptTurboMessage
+      //length: 50,
+      //temperature: 0.7,
+      //max_rerolls: 5,
+      //n: 1,
+      //stop: '\n'
+    };
+    let apiResponsePromise;
+    let timeoutId2; //initialize timeoutId variable
+    function makeApiRequest() {
+      const cancelTokenSource = axios.CancelToken.source();
+    
+      apiResponsePromise = axios.post(apiUrl, requestData, {
+        headers: {
+          Authorization: authToken,
+          'Content-Type': 'application/json',
+        },
+        cancelToken: cancelTokenSource.token,
+      });
+    
+      apiResponsePromise.then((response) => {
+        // Access the response data here
+        console.log(response.data);
+        clearTimeout(timeoutId2);
+        const finalSpeech = ` ${response.data.choices[0].message.content}.`;
+        const index2 = Math.floor(Math.random() * 3);
+        gptTurboMessage.push({role:response.data.choices[0].message.role, content: response.data.choices[0].message.content});
+    
+        return handlerInput.responseBuilder
+          .speak(finalSpeech)
+          .reprompt(other[index2])
+          .getResponse();
+      }).catch((error) => {
+        // Handle any errors here
+        console.log(error);
+      });
+    
+      timeoutId2 =  setTimeout(() => {
+        cancelTokenSource.cancel('Request cancelled after 5 seconds');
+        makeApiRequest();
+      }, 5000);
+    }
+    
+    makeApiRequest(); // Call the function to make the initial API request
+    
+    // Call the function again after 7 seconds
+    setInterval(() => {
+      apiResponsePromise.cancel(); // Cancel the previous request before making a new one
+      makeApiRequest(); // Make a new API request
+    }, 7000);
+
+    */
+  
+   // working code
+   // make a POST API call to the OpenAI GPT-3.5 turbo endpoint
+    const apiUrl = 'https://api.openai.com/v1/chat/completions';
+    const authToken = 'Bearer ${apiAccessToken}
+    const requestData = {
+        model : 'gpt-3.5-turbo',
+        messages: gptTurboMessage
+      //length: 50,
+      //temperature: 0.7,
+      //max_rerolls: 5,
+      //n: 1,
+      //stop: '\n'
+    };
+    //const startTime = Date.now();
+    //const endTime = Date.now();
+    
+    let apiResponsePromise = axios.post(apiUrl, requestData, {
+      headers: {
+        Authorization: authToken,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    //////////////Try the then thing
+    
+    /*while (apiResponsePromise){
+        
+    }*/
+    
+    // working code
+    //progressive call 
+   
+   // Get the API access token and request ID
+    const apiAccessToken = handlerInput.requestEnvelope.context.System.apiAccessToken;
+    const requestId = handlerInput.requestEnvelope.request.requestId;
+
+   
+    const index_filler = Math.floor(Math.random() * 8);
+    const repromptText = fillers[index_filler];
+    
+   
+   const directive = {
+      type: 'VoicePlayer.Speak',
+      speech: repromptText, //+ '<break time="5s"/>' + 'still looking',
+    };
+    const request = {
+      header: {
+        requestId: requestId
+      },
+      directive: directive
+    };
+    //let tempApiResponse = apiResponsePromise;
+    /*while (flagProgressiveAPI === false  ){ //&& tempApiResponse.data.choices[0].message.content === ''
+        //tempApiResponse = apiResponsePromise;
+    }
+   
+   if (flagProgressiveAPI){
+          // Make the API call to mark the directive as complete
     axios.post('https://api.amazonalexa.com/v1/directives', request, {
       headers: {
         Authorization: `Bearer ${apiAccessToken}`,
@@ -105,59 +281,11 @@ const AskChatGPTIntentHandler = {
       console.error('Error sending directive:', error);
     });
    
-}, 4000);
-  
-   
-   // make a POST API call to the OpenAI GPT-3.5 turbo endpoint
-    const apiUrl = 'https://api.openai.com/v1/chat/completions';
-    const authToken = 'Bearer <YOUR_OPEN_AI_KEY>';
-    const requestData = {
-        model : 'gpt-3.5-turbo',
-        messages: gptTurboMessage
-      //length: 50,
-      //temperature: 0.7,
-      //max_rerolls: 5,
-      //n: 1,
-      //stop: '\n'
-    };
-    //const startTime = Date.now();
-    //const endTime = Date.now();
+   }*/
     
-    const apiResponsePromise = axios.post(apiUrl, requestData, {
-      headers: {
-        Authorization: authToken,
-        'Content-Type': 'application/json',
-      },
-    });
-    /*while (apiResponsePromise){
-        
-    }*/
-    //progressive call 
-   
-   // Get the API access token and request ID
-    const apiAccessToken = handlerInput.requestEnvelope.context.System.apiAccessToken;
-    const requestId = handlerInput.requestEnvelope.request.requestId;
-
-   
-    const index_filler = Math.floor(Math.random() * 2);
-    const repromptText = fillers[index_filler];
+    //if (tempApiResponse.data.choices[0].message.content !== ''){}
     
-   
-   const directive = {
-      type: 'VoicePlayer.Speak',
-      speech: repromptText,
-    };
-    
-    
-    const request = {
-      header: {
-        requestId: requestId
-      },
-      directive: directive
-    };
-
-   
-
+     //await sleep(3000); 
   
  /*  // Make the API call to mark the directive as complete
     axios.post('https://api.amazonalexa.com/v1/directives', request, {
@@ -175,12 +303,29 @@ const AskChatGPTIntentHandler = {
    */
    
    // wait for the API response
-   try{
+  // working code
+  try{
     const apiResponse = await apiResponsePromise;
     clearTimeout(timeoutId);
+   
     const finalSpeech = ` ${apiResponse.data.choices[0].message.content}.`;
     const index2 = Math.floor(Math.random() * 3);
     gptTurboMessage.push({role:apiResponse.data.choices[0].message.role, content: apiResponse.data.choices[0].message.content});
+    /*const data = JSON.stringify(gptTurboMessage);
+
+    // writing the JSON string content to a file
+    fs.writeFile("./previousConversation.json", data, (error) => {
+      // throwing the error
+      // in case of a writing problem
+      if (error) {
+        // logging the error
+        console.error(error);
+    
+        throw error;
+      }
+    
+      console.log("previousConversation.json written correctly");
+    });*/
     return handlerInput.responseBuilder
       .speak(finalSpeech)
       .reprompt(other[index2])
@@ -234,6 +379,13 @@ catch (error){
       */
   }
 };
+
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 
 const HelloWorldIntentHandler = {
     canHandle(handlerInput) {
