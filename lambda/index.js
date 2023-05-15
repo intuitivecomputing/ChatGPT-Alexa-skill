@@ -154,7 +154,7 @@ const AskChatGPTIntentHandler = {
 
     /* trying Something
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
-    const authToken = 'Bearer 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';
+    const authToken = 'Bearer ${apiAccessToken}';
     const requestData = {
         model : 'gpt-3.5-turbo',
         messages: gptTurboMessage
